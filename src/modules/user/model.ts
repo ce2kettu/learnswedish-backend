@@ -1,7 +1,5 @@
 import { Schema, Document, model } from 'mongoose';
-import * as mongoose from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { resolve } from 'dns';
 
 const SALT_WORK_FACTOR = 10;
 
@@ -68,4 +66,4 @@ schema.methods.comparePasswords = (candidatePassword: string): Promise<boolean> 
     });
 };
 
-export const User = mongoose.model<IUserModel>('User', schema);
+export const User = model<IUserModel>('User', schema);

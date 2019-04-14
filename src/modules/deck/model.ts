@@ -1,5 +1,4 @@
 import { Schema, Document, model } from 'mongoose';
-import * as mongoose from 'mongoose';
 import { IUserModel } from '../user';
 
 export interface IDeckModel extends Document {
@@ -23,4 +22,4 @@ const schema = new Schema({
 // enable createdAt and updatedAt timestamps
 schema.set('timestamps', true);
 
-export const User = mongoose.model<IDeckModel>('User', schema);
+export const Deck = model<IDeckModel>('Deck', schema);

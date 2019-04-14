@@ -1,5 +1,4 @@
 import { Schema, Document, model } from 'mongoose';
-import * as mongoose from 'mongoose';
 import { IUserModel } from '../user';
 import { IFlashCardModel } from '../flashcard';
 
@@ -24,4 +23,4 @@ const schema = new Schema({
 // enable createdAt and updatedAt timestamps
 schema.set('timestamps', true);
 
-export const User = mongoose.model<IReviewModel>('User', schema);
+export const Review = model<IReviewModel>('Review', schema);

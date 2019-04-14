@@ -1,5 +1,4 @@
 import { Schema, Document, model } from 'mongoose';
-import * as mongoose from 'mongoose';
 import { IDeckModel } from '../deck';
 
 export interface IFlashCardModel extends Document {
@@ -19,4 +18,4 @@ const schema = new Schema({
 // enable createdAt and updatedAt timestamps
 schema.set('timestamps', true);
 
-export const User = mongoose.model<IFlashCardModel>('User', schema);
+export const FlashCard = model<IFlashCardModel>('FlashCard', schema);
