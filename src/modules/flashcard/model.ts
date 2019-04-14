@@ -1,21 +1,19 @@
-import { Schema, Document, model } from 'mongoose';
-import { IDeckModel } from '../deck';
+import { Typegoose, prop, Ref } from 'typegoose';
+import { Deck } from '../deck';
+import { Schema } from 'mongoose';
 
-export interface IFlashCardModel extends Document {
-    deckId: IDeckModel['_id'];
+export class FlashCard extends Typegoose {
+    @prop()
+    _id: Schema.Types.ObjectId;
+    
+    @prop({ required: true })
+    deckId: Deck['_id'];
+
+    @prop({ required: true })
     front: string;
+
+    @prop({ required: true })
     back: string;
-    updatedAt: Date;
-    createdAt: Date;
 }
 
-const schema = new Schema({
-    deckId: { type: Schema.Types.ObjectId, required: true },
-    front: { type: String, required: true },
-    back: { type: String, required: true }
-});
-
-// enable createdAt and updatedAt timestamps
-schema.set('timestamps', true);
-
-export const FlashCard = model<IFlashCardModel>('FlashCard', schema);
+export const FlashCardModel = new FlashCard().getModelForClass(FlashCard, { schemaOptions: { timestamps: true } });

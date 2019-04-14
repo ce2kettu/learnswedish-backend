@@ -1,47 +1,19 @@
-import { Schema, Document, model } from 'mongoose';
+import { Typegoose, prop, pre, instanceMethod, ModelType } from 'typegoose';
 import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
+import { Schema } from 'mongoose';
 
 const SALT_WORK_FACTOR = 10;
 
-export interface IUserModel extends Document {
-    username: string;
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    isActive: boolean;
-    isAdmin: boolean;
-    ipAddress: string;
-    lastLogin: Date;
-    updatedAt: Date;
-    createdAt: Date;
-    comparePassword(candidatePassword: string): Promise<boolean>;
-}
-
-const schema = new Schema({
-    username: { type: String, required: true, unique: true, minlength: 4, maxlength: 32},
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true, minlength: 6, maxlength: 72 },
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
-    isActive: { type: Boolean, default: true },
-    isAdmin: { type: Boolean, default: false },
-    ipAddress: { type: String, default: null },
-    lastLogin: { type: Date, default: null }
-});
-
-// enable createdAt and updatedAt timestamps
-schema.set('timestamps', true);
-
-schema.pre("save", (next) => {
+@pre<User>('save', (next) => {
     const user = this;
 
     // only hash the password if it has been modified (or is new)
-    if (!user.isModified("password")) return next();
+    if (!user.isModified('password')) return next();
 
     // generate a salt
     bcrypt.genSalt(SALT_WORK_FACTOR, (err, salt) => {
-        if (err) { return next(err); }
+        if (err) return next(err);
 
         // hash the password using our new salt
         bcrypt.hash(user.password, salt, (err, hash) => {
@@ -52,18 +24,69 @@ schema.pre("save", (next) => {
             next();
         });
     });
-});
+})
 
-schema.methods.comparePasswords = (candidatePassword: string): Promise<boolean> => {
-    const password = this.password;
+export class User extends Typegoose {
+    @prop()
+    _id: Schema.Types.ObjectId;
 
-    return new Promise((resolve, reject) => {
-        bcrypt.compare(candidatePassword, password, (err, isMatch) => {
-            if (err) return reject(err);
+    @prop({ required: true, unique: true, minlength: 4, maxlength: 32 })
+    username: string;
 
-            return resolve(isMatch);
+    @prop({ required: true, unique: true, lowercase: true, trim: true })
+    email: string;
+
+    @prop({ required: true, minlength: 6, maxlength: 72 })
+    password: string;
+
+    @prop({ required: true })
+    firstName: string;
+
+    @prop({ required: true })
+    lastName: string;
+
+    @prop({ default: true })
+    isActive: boolean;
+
+    @prop({ default: false })
+    isAdmin: boolean;
+
+    @prop()
+    ipAddress?: string;
+
+    @prop()
+    lastLogin?: Date;
+
+    @instanceMethod
+    public comparePassword(password: string): Promise<Boolean | Error> {
+        return new Promise((resolve, reject) => {
+            bcrypt.compare(password, this.password)
+                .then(match => resolve(match))
+                .catch(error => reject(error));
         });
-    });
-};
+    }
 
-export const User = model<IUserModel>('User', schema);
+    @instanceMethod
+    public toAuthJson(this: InstanceType<ModelType<User>> & typeof User) {
+        return {
+            id: this._id,
+            email: this.email,
+            token: this.generateToken(),
+        };
+    }
+
+    @instanceMethod
+    public generateToken(this: InstanceType<ModelType<User>> & typeof User) {
+        const today = new Date();
+        const expirationDate = new Date(today);
+        expirationDate.setDate(today.getDate() + 60);
+
+        return jwt.sign({
+            email: this.email,
+            id: this._id,
+            exp: parseInt(String(expirationDate.getTime() / 1000), 10),
+        }, 'secret');
+    }
+}
+
+export const UserModel = new User().getModelForClass(User, { schemaOptions: { timestamps: true } });

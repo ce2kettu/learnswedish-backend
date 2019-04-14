@@ -1,25 +1,25 @@
-import { Schema, Document, model } from 'mongoose';
-import { IUserModel } from '../user';
+import { Typegoose, prop, Ref } from 'typegoose';
+import { User } from '../user';
+import { Schema } from 'mongoose';
 
-export interface IDeckModel extends Document {
-    userId: IUserModel['_id'];
+export class Deck extends Typegoose {
+    @prop()
+    _id: Schema.Types.ObjectId;
+    
+    @prop({ required: true })
+    userId: User['_id'];
+
+    @prop({ required: true, minlength: 4, maxlength: 24 })
     title: string;
+
+    @prop({ required: true, minlength: 4, maxlength: 256 })
     description: string;
-    imageUrl: string;
-    isPublic: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+
+    @prop({ default: null })
+    imageUrl?: string;
+
+    @prop({ default: false })
+    isPublic?: boolean;
 }
 
-const schema = new Schema({
-    userId: { type: Schema.Types.ObjectId, required: true },
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    imageUrl: { type: String, default: null },
-    isPublic: { type: Boolean, default: false }
-});
-
-// enable createdAt and updatedAt timestamps
-schema.set('timestamps', true);
-
-export const Deck = model<IDeckModel>('Deck', schema);
+export const DeckModel = new Deck().getModelForClass(Deck, { schemaOptions: { timestamps: true } });

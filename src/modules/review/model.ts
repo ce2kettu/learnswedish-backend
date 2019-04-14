@@ -1,26 +1,26 @@
-import { Schema, Document, model } from 'mongoose';
-import { IUserModel } from '../user';
-import { IFlashCardModel } from '../flashcard';
+import { Typegoose, prop, Ref } from 'typegoose';
+import { User } from '../user';
+import { Schema } from 'mongoose';
+import { FlashCard } from '../flashcard';
 
-export interface IReviewModel extends Document {
-    userId: IUserModel['_id'];
-    cardId: IFlashCardModel['_id'];
+export class Review extends Typegoose {
+    @prop()
+    _id: Schema.Types.ObjectId;
+    
+    @prop({ required: true })
+    userId: User['_id'];
+
+    @prop({ required: true })
+    cardId: FlashCard['_id'];
+
+    @prop({ required: true })
     progress: number;
-    dueDate: Date;
+
+    @prop({ required: true })
     dueAgain: boolean;
-    updatedAt: Date;
-    createdAt: Date;
+
+    @prop({ required: true })
+    dueDate: Date;
 }
 
-const schema = new Schema({
-    userId: { type: Schema.Types.ObjectId, required: true },
-    cardId: { type: Schema.Types.ObjectId, required: true },
-    progress: { type: Number, required: true },
-    dueDate: { type: Date, required: true },
-    dueAgain: { type: Boolean, required: true }
-});
-
-// enable createdAt and updatedAt timestamps
-schema.set('timestamps', true);
-
-export const Review = model<IReviewModel>('Review', schema);
+export const ReviewModel = new Review().getModelForClass(Review, { schemaOptions: { timestamps: true } });
