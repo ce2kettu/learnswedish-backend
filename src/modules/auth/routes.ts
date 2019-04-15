@@ -1,5 +1,5 @@
-import { Router } from 'express';
-import { AuthController } from './controller';
+import { Router } from "express";
+import { AuthController } from "./controller";
 
 export class AuthRoutes {
     public router: Router;
@@ -9,7 +9,7 @@ export class AuthRoutes {
         this.routes();
     }
 
-    routes() {
-        this.router.get('/');
+    public routes() {
+        this.router.get("/");
     }
 }

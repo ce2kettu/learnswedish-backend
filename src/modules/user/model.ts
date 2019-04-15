@@ -1,23 +1,23 @@
-import { Typegoose, prop, pre, instanceMethod, ModelType } from 'typegoose';
-import * as bcrypt from 'bcrypt';
-import * as jwt from 'jsonwebtoken';
-import { Schema } from 'mongoose';
+import * as bcrypt from "bcrypt";
+import * as jwt from "jsonwebtoken";
+import { Schema } from "mongoose";
+import { instanceMethod, ModelType, pre, prop, Typegoose } from "typegoose";
 
 const SALT_WORK_FACTOR = 10;
 
-@pre<User>('save', function(next) {
+@pre<User>("save", function(next) {
     const user = this;
 
     // only hash the password if it has been modified (or is new)
-    if (!this.isModified('password')) return next();
+    if (!this.isModified("password")) { return next(); }
 
     // generate a salt
-    bcrypt.genSalt(SALT_WORK_FACTOR, (err, salt) => {
-        if (err) return next(err);
+    bcrypt.genSalt(SALT_WORK_FACTOR, (errSalt, salt) => {
+        if (errSalt) { return next(errSalt); }
 
         // hash the password using our new salt
-        bcrypt.hash(user.password, salt, (err, hash) => {
-            if (err) return next(err);
+        bcrypt.hash(user.password, salt, (errHash, hash) => {
+            if (errHash) { return next(errHash); }
 
             // override the cleartext password with the hashed one
             user.password = hash;
@@ -27,43 +27,44 @@ const SALT_WORK_FACTOR = 10;
 })
 
 export class User extends Typegoose {
-    _id: Schema.Types.ObjectId;
-    createdAt: Date;
-    updatedAt: Date;
+    // tslint:disable-next-line:variable-name
+    public _id: Schema.Types.ObjectId;
+    public createdAt: Date;
+    public updatedAt: Date;
 
     @prop({ required: true, unique: true, minlength: 4, maxlength: 32 })
-    username: string;
+    public username: string;
 
     @prop({ required: true, unique: true, lowercase: true, trim: true })
-    email: string;
+    public email: string;
 
     @prop({ required: true, minlength: 6, maxlength: 72 })
-    password: string;
+    public password: string;
 
     @prop({ required: true })
-    firstName: string;
+    public firstName: string;
 
     @prop({ required: true })
-    lastName: string;
+    public lastName: string;
 
     @prop({ default: true })
-    isActive: boolean;
+    public isActive: boolean;
 
     @prop({ default: false })
-    isAdmin: boolean;
+    public isAdmin: boolean;
 
     @prop({ default: null })
-    ipAddress: string;
+    public ipAddress: string;
 
     @prop({ default: null })
-    lastLogin: Date;
+    public lastLogin: Date;
 
     @instanceMethod
-    public comparePassword(password: string): Promise<Boolean | Error> {
+    public comparePassword(password: string): Promise<boolean | Error> {
         return new Promise((resolve, reject) => {
             bcrypt.compare(password, this.password)
-                .then(match => resolve(match))
-                .catch(error => reject(error));
+                .then((match) => resolve(match))
+                .catch((error) => reject(error));
         });
     }
 
@@ -86,7 +87,7 @@ export class User extends Typegoose {
             email: this.email,
             id: this._id,
             exp: parseInt(String(expirationDate.getTime() / 1000), 10),
-        }, 'secret');
+        }, "secret");
     }
 }
 

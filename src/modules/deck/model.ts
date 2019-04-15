@@ -1,26 +1,27 @@
-import { Typegoose, prop, Ref } from 'typegoose';
-import { User } from '../user';
-import { Schema } from 'mongoose';
+import { Schema } from "mongoose";
+import { prop, Ref, Typegoose } from "typegoose";
+import { User } from "../user";
 
 export class Deck extends Typegoose {
-    _id: Schema.Types.ObjectId;
-    createdAt: Date;
-    updatedAt: Date;
-    
+    // tslint:disable-next-line:variable-name
+    public _id: Schema.Types.ObjectId;
+    public createdAt: Date;
+    public updatedAt: Date;
+
     @prop({ required: true, ref: User })
-    userId: Ref<User>;
+    public userId: Ref<User>;
 
     @prop({ required: true, minlength: 4, maxlength: 24 })
-    title: string;
+    public title: string;
 
     @prop({ required: true, minlength: 4, maxlength: 256 })
-    description: string;
+    public description: string;
 
     @prop({ default: null })
-    imageUrl?: string;
+    public imageUrl?: string;
 
     @prop({ default: false })
-    isPublic?: boolean;
+    public isPublic?: boolean;
 }
 
 export const DeckModel = new Deck().getModelForClass(Deck, { schemaOptions: { timestamps: true } });
