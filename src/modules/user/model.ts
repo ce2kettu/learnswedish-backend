@@ -5,11 +5,11 @@ import { Schema } from 'mongoose';
 
 const SALT_WORK_FACTOR = 10;
 
-@pre<User>('save', (next) => {
+@pre<User>('save', function(next) {
     const user = this;
 
     // only hash the password if it has been modified (or is new)
-    if (!user.isModified('password')) return next();
+    if (!this.isModified('password')) return next();
 
     // generate a salt
     bcrypt.genSalt(SALT_WORK_FACTOR, (err, salt) => {
@@ -27,8 +27,9 @@ const SALT_WORK_FACTOR = 10;
 })
 
 export class User extends Typegoose {
-    @prop()
     _id: Schema.Types.ObjectId;
+    createdAt: Date;
+    updatedAt: Date;
 
     @prop({ required: true, unique: true, minlength: 4, maxlength: 32 })
     username: string;
@@ -51,11 +52,11 @@ export class User extends Typegoose {
     @prop({ default: false })
     isAdmin: boolean;
 
-    @prop()
-    ipAddress?: string;
+    @prop({ default: null })
+    ipAddress: string;
 
-    @prop()
-    lastLogin?: Date;
+    @prop({ default: null })
+    lastLogin: Date;
 
     @instanceMethod
     public comparePassword(password: string): Promise<Boolean | Error> {

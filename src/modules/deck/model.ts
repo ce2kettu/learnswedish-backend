@@ -3,11 +3,12 @@ import { User } from '../user';
 import { Schema } from 'mongoose';
 
 export class Deck extends Typegoose {
-    @prop()
     _id: Schema.Types.ObjectId;
+    createdAt: Date;
+    updatedAt: Date;
     
-    @prop({ required: true })
-    userId: User['_id'];
+    @prop({ required: true, ref: User })
+    userId: Ref<User>;
 
     @prop({ required: true, minlength: 4, maxlength: 24 })
     title: string;

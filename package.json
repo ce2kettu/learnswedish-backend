@@ -7,7 +7,11 @@
   "keywords": [],
   "author": "",
   "scripts": {
-    "start": "tsc && node src/app.ts"
+    "start": "npm run build && npm run serve",
+    "build": "npm run build-ts",
+    "serve": "node dist/app.js",
+    "build-ts": "tsc",
+    "tslint": "tslint -c tslint.json -p tsconfig.json"
   },
   "dependencies": {
     "@types/bcrypt": "^3.0.0",
