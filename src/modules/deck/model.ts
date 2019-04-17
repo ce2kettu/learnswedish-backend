@@ -4,7 +4,7 @@ import { User } from "../user";
 
 export class Deck extends Typegoose {
     // tslint:disable-next-line:variable-name
-    public _id: Schema.Types.ObjectId;
+    public _id: string;
     public createdAt: Date;
     public updatedAt: Date;
 

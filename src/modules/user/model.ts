@@ -28,7 +28,7 @@ const SALT_WORK_FACTOR = 10;
 
 export class User extends Typegoose {
     // tslint:disable-next-line:variable-name
-    public _id: Schema.Types.ObjectId;
+    public _id: string;
     public createdAt: Date;
     public updatedAt: Date;
 
