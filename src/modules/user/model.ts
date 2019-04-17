@@ -60,21 +60,12 @@ export class User extends Typegoose {
     public lastLogin: Date;
 
     @instanceMethod
-    public comparePassword(password: string): Promise<boolean | Error> {
+    public comparePassword(password: string): Promise<boolean> {
         return new Promise((resolve, reject) => {
             bcrypt.compare(password, this.password)
                 .then((match) => resolve(match))
-                .catch((error) => reject(error));
+                .catch((err) => reject(err));
         });
-    }
-
-    @instanceMethod
-    public toAuthJson(this: InstanceType<ModelType<User>> & typeof User) {
-        return {
-            id: this._id,
-            email: this.email,
-            token: this.generateToken(),
-        };
     }
 
     @instanceMethod

@@ -5,8 +5,9 @@ import * as cors from "cors";
 import * as compression from "compression";
 import * as morgan from "morgan";
 import * as mongoose from "mongoose";
-import { Config } from "./utils/config";
+import Config from "./utils/config";
 import routes from "./routes";
+import errorMiddleware from "./middlewares/errorHandler";
 
 class Server {
     public app: express.Application;
@@ -14,22 +15,29 @@ class Server {
 
     constructor() {
         this.app = express();
+        this.config();
         this.initMiddlewares();
         this.initRoutes();
         this.dbConnect();
+        this.errorHandler();
     }
 
-    public start(): void {
+    public start() {
         this.app.listen(this.port, () => {
             console.log("API is running at http://localhost:%d", this.port);
         });
     }
 
-    private initRoutes(): void {
+    private config() {
+        // pretty print json
+        this.app.set("json spaces", 2);
+    }
+
+    private initRoutes() {
         this.app.use("/", routes);
     }
 
-    private initMiddlewares(): void {
+    private initMiddlewares() {
         // cross-origin support
         this.app.use(cors());
 
@@ -49,15 +57,19 @@ class Server {
         this.app.use(bodyParser.urlencoded({ extended: false }));
     }
 
-    private dbConnect(): void {
+    private dbConnect() {
         mongoose.connect(Config.MONGODB_URI, { useNewUrlParser: true, useCreateIndex: true })
             .then(async () => {
                 console.info("Successfully connected");
             })
-            .catch((error) => {
-                console.error("Error connecting to database: ", error);
+            .catch((err) => {
+                console.error("Error connecting to database: ", err);
                 return process.exit(1);
             });
+    }
+
+    private errorHandler() {
+        this.app.use(errorMiddleware);
     }
 }
 
