@@ -1,3 +1,6 @@
+import * as HttpStatus from "http-status-codes";
+import { Config } from "./config";
+
 // tslint:disable: max-classes-per-file
 
 export class HttpException extends Error {
@@ -11,8 +14,22 @@ export class HttpException extends Error {
     }
 }
 
-export class InternalServerError extends HttpException {
-    constructor() {
-        super(500, "Something went wrong");
+export class InternalServerException extends HttpException {
+    constructor(message: string) {
+        message = Config.NODE_ENV === "dev" ? message : "Something went wrong";
+        super(HttpStatus.INTERNAL_SERVER_ERROR, message);
+    }
+}
+
+export class UnauthorizedException extends HttpException {
+    constructor(message: string) {
+        super(HttpStatus.UNAUTHORIZED, message);
+    }
+}
+
+export class InvalidRequestException extends HttpException {
+    constructor(message?: string) {
+        message = message || "Invalid request";
+        super(HttpStatus.BAD_REQUEST, message);
     }
 }

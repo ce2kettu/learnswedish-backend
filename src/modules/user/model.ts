@@ -1,7 +1,5 @@
 import * as bcrypt from "bcrypt";
-import * as jwt from "jsonwebtoken";
-import { Schema } from "mongoose";
-import { instanceMethod, ModelType, pre, prop, Typegoose } from "typegoose";
+import { instanceMethod, pre, prop, Typegoose } from "typegoose";
 
 const SALT_WORK_FACTOR = 10;
 
@@ -63,22 +61,9 @@ export class User extends Typegoose {
     public comparePassword(password: string): Promise<boolean> {
         return new Promise((resolve, reject) => {
             bcrypt.compare(password, this.password)
-                .then((match) => resolve(match))
+                .then((isMatch) => resolve(isMatch))
                 .catch((err) => reject(err));
         });
-    }
-
-    @instanceMethod
-    public generateToken(this: InstanceType<ModelType<User>> & typeof User) {
-        const today = new Date();
-        const expirationDate = new Date(today);
-        expirationDate.setDate(today.getDate() + 60);
-
-        return jwt.sign({
-            email: this.email,
-            id: this._id,
-            exp: parseInt(String(expirationDate.getTime() / 1000), 10),
-        }, "secret");
     }
 }
 

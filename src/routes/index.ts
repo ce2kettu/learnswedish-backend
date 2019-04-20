@@ -1,14 +1,18 @@
 import { Router } from "express";
 import { AuthRoutes } from "../modules/auth";
 import { HttpException } from "../utils/exception";
+import { isAuthenticated } from "../middlewares/isAuthenticated";
 
 const routes = Router();
 
 routes.use("/auth", new AuthRoutes().router);
 
-// return page not found for all other routes
-routes.all("*", (req, res, next) => {
-    next(new HttpException(404, "Page not found"));
+routes.get("/me", isAuthenticated, (req, res, next) => {
+    res.status(200).json({ status: 200, error: null, message: "authenticated" });
+});
+
+routes.get("/status", (req, res, next) => {
+    res.status(200).json({ status: 200, error: null });
 });
 
 export default routes;

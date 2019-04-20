@@ -12,8 +12,7 @@ export class AuthRoutes {
     }
 
     public routes() {
-        this.router.post("/login", this.controller.login);
-        this.router.post("/logout", this.controller.logout);
+        this.router.post("/signin", this.controller.login);
         this.router.post("/register", this.controller.register);
         this.router.post("/change-password", this.controller.changePassword);
     }

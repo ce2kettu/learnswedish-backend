@@ -5,9 +5,9 @@ import * as cors from "cors";
 import * as compression from "compression";
 import * as morgan from "morgan";
 import * as mongoose from "mongoose";
-import Config from "./utils/config";
+import { Config } from "./utils";
 import routes from "./routes";
-import errorMiddleware from "./middlewares/errorHandler";
+import { routeNotFound, errorMiddleware } from "./middlewares/error";
 
 class Server {
     public app: express.Application;
@@ -18,6 +18,7 @@ class Server {
         this.config();
         this.initMiddlewares();
         this.initRoutes();
+        this.routeNotFound();
         this.dbConnect();
         this.errorHandler();
     }
@@ -34,7 +35,11 @@ class Server {
     }
 
     private initRoutes() {
-        this.app.use("/", routes);
+        this.app.use("/api/v1", routes);
+    }
+
+    private routeNotFound() {
+        this.app.use(routeNotFound);
     }
 
     private initMiddlewares() {

@@ -1,57 +1,114 @@
 import * as jwt from "jsonwebtoken";
+import * as requestIp from "request-ip";
 import { Request, Response, NextFunction } from "express";
 import { UserModel, User } from "../user";
-import Config from "../../utils/config";
+import { Config, InvalidRequestException, UnauthorizedException, InternalServerException } from "../../utils";
 import { ITokenData, IDataStoredInToken } from "../../interfaces/token";
-import { HttpException, InternalServerError } from "../../utils/exception";
-import apiResponse from "../../utils/apiResponse";
+import { API } from "../../utils";
+import { AccessLogModel } from "../accesslog";
+
+const tokenExpire = 60 * 60; // an hour
+const refreshTokenExpire = 31 * 24 * 60 * 60; // 31 days
+
+interface ILoginCredentials {
+    username: string;
+    password: string;
+}
+
+interface IRenewToken {
+    refreshToken: string;
+}
+
+interface IRegisterUser {
+    username: string;
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+}
+
+interface IChangePassword {
+    oldPassword: string;
+    newPassword: string;
+}
+
+interface IAuthenticatedRequest extends Request {
+    user: User;
+}
 
 export class AuthController {
     public login = async (req: Request, res: Response, next: NextFunction) => {
-        const { username, password } = req.body;
+        try {
+            const postData: ILoginCredentials = req.body;
 
-        // check if credentials are set
-        if (!(username && password)) {
-            return new HttpException(400, "Invalid request");
-        }
+            // TODO: better validation
+            // validate request
+            if (!(postData.username && postData.password)) {
+                return next(new InvalidRequestException());
+            }
 
-        let user: User;
+            // find the user with specified username
+            const user: User = await UserModel.findOne({ username: postData.username });
 
-        // find the user with specified username
-        await UserModel.findOne({ username })
-        .then((data) => {
-            user = data;
-        })
-        .catch(() => {
-            return next(new InternalServerError());
-        });
+            // no user found
+            if (!user) {
+                return next(new UnauthorizedException("Wrong username or password"));
+            }
 
-        // no user found
-        if (!user) {
-            return next(new HttpException(401, `No user found with username: ${username}`));
-        }
+            // check if the specified password is valid
+            const isValid = await user.comparePassword(postData.password);
 
-        // check if password is valid
-        await user.comparePassword(password)
-            .then((isValid) => {
-                if (isValid) {
-                    const tokenData = this.generateToken(user);
-                    res.setHeader("Set-Cookie", [this.createCookie(tokenData)]);
-                    apiResponse(res, user);
-                } else {
-                    next(new HttpException(400, "Wrong credentials"));
-                }
-            })
-            .catch(() => {
-                next(new InternalServerError());
+            if (!isValid) {
+                next(new UnauthorizedException("Wrong username or password"));
+            }
+
+            const token = this.generateToken(user);
+            const refreshToken = this.generateToken(user, true);
+
+            // log new access
+            await this.logUserAccess(req, user);
+
+            // remove passsword property from response
+            user.password = undefined;
+
+            return API.response(res, {
+                token,
+                refreshToken,
+                user,
             });
+        } catch (err) {
+            return next(new InternalServerException(err));
+        }
     }
 
-    public async logout(req: Request, res: Response) { }
+    public logUserAccess = async (req: Request, user: User) => {
+        return new Promise((resolve, reject) => {
+            const logEntry = new AccessLogModel({
+                userId: user._id,
+                ipAddress: requestIp.getClientIp(req),
+                browser: req.headers["user-agent"],
+            });
 
-    public async register(req: Request, res: Response) { }
+            logEntry.save()
+                .then((entry) => resolve(entry))
+                .catch((err) => reject(err));
+        });
+    }
 
-    public async changePassword(req: Request, res: Response) {
+    public renewToken = async (req: Request, res: Response, next: NextFunction) => {
+        const postData: IRenewToken = req.body;
+
+        // validate request
+        if (!postData.refreshToken) {
+            return new InvalidRequestException();
+        }
+    }
+
+    public register = async (req: Request, res: Response, next: NextFunction) => {
+        const postData: IRegisterUser = req.body;
+    }
+
+    public changePassword = async (req: Request, res: Response, next: NextFunction) => {
         const { oldPassword, newPassword } = req.body;
 
         // get ID from the JWT
@@ -63,8 +120,12 @@ export class AuthController {
         }
     }
 
-    private generateToken(user: User): ITokenData {
-        const expiresIn = 60 * 60; // an hour
+    public forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+        const postData = req.body;
+    }
+
+    private generateToken(user: User, isRefresh: boolean = false): ITokenData {
+        const expiresIn = isRefresh ? refreshTokenExpire : tokenExpire;
         const secret = Config.JWT_SECRET;
         const dataStoredInToken: IDataStoredInToken = {
             _id: user._id,
@@ -74,9 +135,5 @@ export class AuthController {
             expiresIn,
             token: jwt.sign(dataStoredInToken, secret, { expiresIn }),
         };
-    }
-
-    private createCookie(tokenData: ITokenData) {
-        return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn}`;
     }
 }
