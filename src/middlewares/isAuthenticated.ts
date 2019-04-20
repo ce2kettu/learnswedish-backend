@@ -1,12 +1,9 @@
 import * as jwt from "jsonwebtoken";
 import { Response, Request, NextFunction } from "express";
 import { Config, HttpException, InternalServerException, UnauthorizedException } from "../utils";
-import { IDataStoredInToken } from "../interfaces/token";
+import { ITokenPayload } from "../interfaces/token";
 import { User, UserModel } from "../modules/user";
-
-interface IAuthenticatedRequest extends Request {
-    user: User;
-}
+import { IAuthenticatedRequest } from "../interfaces/auth";
 
 function getToken(req: Request): string {
     // try to get token from Authorization header
@@ -22,33 +19,25 @@ function getToken(req: Request): string {
 }
 
 export async function isAuthenticated(req: IAuthenticatedRequest, res: Response, next: NextFunction) {
-    const token = getToken(req);
-
-    // no token provided
-    if (!token) {
-        return next(new UnauthorizedException("Invalid token"));
-    }
-
     try {
-        const verification = jwt.verify(token, Config.JWT_SECRET) as IDataStoredInToken;
-        const userId = verification._id;
-        let user: User;
+        const token = getToken(req);
 
-        await UserModel.findById(userId)
-            .then((data) => {
-                user = data;
-            })
-            .catch((err) => {
-                return next(new InternalServerException(err));
-            });
+        // no token provided
+        if (!token) {
+            return next(new UnauthorizedException("Invalid token"));
+        }
+
+        const verification = jwt.verify(token, Config.JWT_SECRET) as ITokenPayload;
+        const userId = verification._id;
+        const user = await UserModel.findById(userId);
 
         if (user) {
             req.user = user;
             next();
         } else {
-            next(new HttpException(400, "Wrong authentication token"));
+            return next(new HttpException(400, "Wrong authentication token"));
         }
     } catch (err) {
-        next(new HttpException(400, "Wrong authentication token"));
+        return next(new HttpException(400, "Wrong authentication token"));
     }
 }

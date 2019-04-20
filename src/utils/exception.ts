@@ -27,9 +27,9 @@ export class UnauthorizedException extends HttpException {
     }
 }
 
-export class InvalidRequestException extends HttpException {
+export class BadRequestException extends HttpException {
     constructor(message?: string) {
-        message = message || "Invalid request";
+        message = message || "Bad Request";
         super(HttpStatus.BAD_REQUEST, message);
     }
 }

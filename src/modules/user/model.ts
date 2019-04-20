@@ -25,7 +25,7 @@ const SALT_WORK_FACTOR = 10;
 })
 
 export class User extends Typegoose {
-    // tslint:disable-next-line:variable-name
+    // tslint:disable-next-line: variable-name
     public _id: string;
     public createdAt: Date;
     public updatedAt: Date;
@@ -50,12 +50,6 @@ export class User extends Typegoose {
 
     @prop({ default: false })
     public isAdmin: boolean;
-
-    @prop({ default: null })
-    public ipAddress: string;
-
-    @prop({ default: null })
-    public lastLogin: Date;
 
     @instanceMethod
     public comparePassword(password: string): Promise<boolean> {

@@ -4,7 +4,7 @@ import { HttpException, Config } from "../utils";
 import { API } from "../utils";
 
 export function routeNotFound(req: Request, res: Response, next: NextFunction): void {
-    API.error(res, HttpStatus.NOT_FOUND, "Not found");
+    API.error(res, HttpStatus.NOT_FOUND, "Not Found");
 }
 
 export function errorMiddleware(err: HttpException, req: Request, res: Response, next: NextFunction): void {

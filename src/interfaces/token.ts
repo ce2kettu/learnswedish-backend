@@ -1,8 +1,10 @@
 export interface ITokenData {
-    token: string;
+    tokenType: string;
+    accessToken: string;
+    refreshToken: string;
     expiresIn: number;
 }
 
-export interface IDataStoredInToken {
+export interface ITokenPayload {
     _id: string;
 }

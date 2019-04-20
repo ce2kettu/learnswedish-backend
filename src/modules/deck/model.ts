@@ -1,9 +1,8 @@
-import { Schema } from "mongoose";
 import { prop, Ref, Typegoose } from "typegoose";
 import { User } from "../user";
 
 export class Deck extends Typegoose {
-    // tslint:disable-next-line:variable-name
+    // tslint:disable-next-line: variable-name
     public _id: string;
     public createdAt: Date;
     public updatedAt: Date;
