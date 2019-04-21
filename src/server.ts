@@ -63,7 +63,7 @@ class Server {
     }
 
     private dbConnect() {
-        mongoose.connect(Config.MONGODB_URI, { useNewUrlParser: true, useCreateIndex: true })
+        mongoose.connect(Config.MONGODB_URI, { useNewUrlParser: true, useCreateIndex: true, useFindAndModify: false })
             .then(async () => {
                 console.info("Successfully connected");
             })

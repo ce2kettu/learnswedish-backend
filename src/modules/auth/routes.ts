@@ -1,6 +1,10 @@
+import * as Validator from "../../validation/auth";
 import { Router } from "express";
 import { AuthController } from "./controller";
 import { isAuthenticated } from "../../middlewares/isAuthenticated";
+import { validateMiddleware } from "../../middlewares/validate";
+
+const validate = (validation: any) => [validation, validateMiddleware];
 
 export class AuthRoutes {
     public router: Router;
@@ -13,9 +17,11 @@ export class AuthRoutes {
     }
 
     public routes() {
-        this.router.post("/signin", this.controller.login);
-        this.router.post("/register", this.controller.register);
-        this.router.post("/token", this.controller.renewToken);
-        this.router.post("/change-password", isAuthenticated, this.controller.changePassword);
+        this.router.post("/signin", validate(Validator.login), this.controller.login);
+        this.router.post("/register", validate(Validator.register), this.controller.register);
+        this.router.post("/token", validate(Validator.renewToken), this.controller.renewToken);
+        this.router.post("/forgot-password", validate(Validator.forgotPassword), this.controller.forgotPassword);
+        this.router.post("/change-password", isAuthenticated,
+            validate(Validator.changePassword), this.controller.changePassword);
     }
 }

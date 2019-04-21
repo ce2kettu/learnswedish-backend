@@ -3,7 +3,7 @@ import { prop, Typegoose, Ref, staticMethod, ModelType } from "typegoose";
 import { addDays } from "date-fns";
 import { User } from "../user";
 
-const TOKEN_LIFETIME_IN_DAYS = 60;
+const TOKEN_EXPIRATION_DAYS = 60;
 
 export class RefreshToken extends Typegoose {
     // tslint:disable-next-line: variable-name
@@ -25,7 +25,7 @@ export class RefreshToken extends Typegoose {
     public static generate(user: User): RefreshToken {
         const hash = crypto.randomBytes(40).toString("hex");
         const token = `${user._id}.${hash}`;
-        const expiresAt = addDays(Date.now(), TOKEN_LIFETIME_IN_DAYS);
+        const expiresAt = addDays(Date.now(), TOKEN_EXPIRATION_DAYS);
         const tokenEntry = new RefreshTokenModel({
             userId: user._id,
             token,

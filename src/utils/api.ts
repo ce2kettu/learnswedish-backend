@@ -6,13 +6,13 @@ export class API {
         data = data || {};
         status = status || HttpStatus.OK;
 
-        res.status(status).json({ status, error: null, data });
+        res.status(status).json({ statusCode: status, errors: [], data });
     }
 
-    public static error(res: Response, status?: number, error?: string) {
+    public static error(res: Response, status?: number, errors?: any[]) {
         status = status || HttpStatus.INTERNAL_SERVER_ERROR;
-        error = error.toLowerCase() || null;
+        errors = errors || null;
 
-        res.status(status).json({ status, error });
+        res.status(status).json({ statusCode: status, errors });
     }
 }

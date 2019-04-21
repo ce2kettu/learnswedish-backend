@@ -15,8 +15,9 @@ export class HttpException extends Error {
 }
 
 export class InternalServerException extends HttpException {
-    constructor(message: string) {
-        message = Config.NODE_ENV === "dev" ? message : "Something went wrong";
+    constructor(error?: string, pretty?: string) {
+        error = Config.NODE_ENV === "dev" ? error : "Something went wrong";
+        const message = error || pretty;
         super(HttpStatus.INTERNAL_SERVER_ERROR, message);
     }
 }

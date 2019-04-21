@@ -1,6 +1,6 @@
 import * as jwt from "jsonwebtoken";
 import { Response, Request, NextFunction } from "express";
-import { Config, HttpException, InternalServerException, UnauthorizedException } from "../utils";
+import { Config, HttpException, UnauthorizedException } from "../utils";
 import { ITokenPayload } from "../interfaces/token";
 import { User, UserModel } from "../modules/user";
 import { IAuthenticatedRequest } from "../interfaces/auth";

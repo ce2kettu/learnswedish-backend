@@ -3,7 +3,7 @@ import { InstanceType } from "typegoose";
 import { User } from "../modules/user";
 
 export interface ILoginCredentials {
-    username: string;
+    email: string;
     password: string;
 }
 
@@ -15,6 +15,7 @@ export interface IRegisterUser {
     username: string;
     email: string;
     password: string;
+    confirmPassword: string;
     firstName: string;
     lastName: string;
 }
@@ -22,6 +23,7 @@ export interface IRegisterUser {
 export interface IChangePassword {
     oldPassword: string;
     newPassword: string;
+    confirmPassword: string;
 }
 
 export interface IForgotPassword {
