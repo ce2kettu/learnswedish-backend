@@ -14,6 +14,9 @@ export async function validateMiddleware(req: Request, res: Response, next: Next
         if (!errors.isEmpty()) {
             return API.error(res, 400, errors.array());
         }
+
+        // continue
+        next();
     } catch (err) {
         return next(new HttpException(400, "wat"));
     }

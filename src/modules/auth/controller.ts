@@ -2,7 +2,7 @@ import * as crypto from "crypto";
 import * as jwt from "jsonwebtoken";
 import * as requestIp from "request-ip";
 import { Request, Response, NextFunction } from "express";
-import { UserModel, User } from "../user";
+import { UserModel, IUser } from "../user";
 import { Config, BadRequestException, UnauthorizedException, InternalServerException } from "../../utils";
 import { ITokenData, ITokenPayload } from "../../interfaces/token";
 import { API } from "../../utils";
@@ -12,6 +12,8 @@ import { RefreshTokenModel } from "../refreshToken";
 import { ILoginCredentials, IRenewToken, IRegisterUser, IChangePassword, IForgotPassword, IAuthenticatedRequest } from "../../interfaces/auth";
 import { isBefore, addHours } from "date-fns";
 import { PasswordResetModel } from "../passwordReset";
+import { ObjectId } from "bson";
+import { transformModel } from "../../utils/pretty";
 
 const JWT_EXPIRATION_MINUTES = 60;
 const PASSWORD_RESET_VALID_HOURS = 12;
@@ -32,22 +34,18 @@ export class AuthController {
             // check if the specified password is valid
             const isValid = await user.comparePassword(postData.password);
 
+            // wrong password
             if (!isValid) {
-                next(new UnauthorizedException("Wrong email or password"));
+                return next(new UnauthorizedException("Wrong email or password"));
             }
-
-            // create new token for the user
-            const token = this.generateToken(user);
 
             // log new access
             await this.logUserAccess(req, user);
 
-            // remove passsword property from response
-            user.password = undefined;
-
+            // return access token and user response
             return API.response(res, {
-                token,
-                user,
+                token: this.generateToken(user),
+                user: transformModel(user),
             });
         } catch (err) {
             return next(new InternalServerException(err, "Authentication failed"));
@@ -57,7 +55,6 @@ export class AuthController {
     public register = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const postData: IRegisterUser = req.body;
-
             const userObject = new UserModel({
                 username: postData.username,
                 email: postData.email,
@@ -69,18 +66,13 @@ export class AuthController {
             // save new user
             const user = await userObject.save();
 
-            // create new token for the user
-            const token = this.generateToken(user);
-
             // log new access
             await this.logUserAccess(req, user);
 
-            // remove passsword property from response
-            user.password = undefined;
-
+            // return access token and user response
             return API.response(res, {
-                token,
-                user,
+                token: this.generateToken(user),
+                user: transformModel(user),
             });
         } catch (err) {
             return next(new InternalServerException(err, "Registration failed"));
@@ -113,7 +105,6 @@ export class AuthController {
     public forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const postData: IForgotPassword = req.body;
-
             const user = await UserModel.findOne({ email: postData.email });
 
             if (!user) {
@@ -143,44 +134,33 @@ export class AuthController {
     public renewToken = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const postData: IRenewToken = req.body;
-            const userId = postData.refreshToken.split(".")[0];
-
-            // validate ObjectID
-            if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
-                return next(new BadRequestException("Invalid refreshToken provided"));
-            }
 
             const refreshObject = await RefreshTokenModel.findOne({
                 token: postData.refreshToken,
             });
 
-            if (!refreshObject) {
-                return next(new BadRequestException("Invalid refreshToken provided"));
+            // token is invalid or has expired
+            if (!refreshObject || isBefore(refreshObject.expiresAt, Date.now())) {
+                return next(new BadRequestException("Invalid refreshToken"));
             }
 
-            // token has expired
-            if (isBefore(refreshObject.expiresAt, Date.now())) {
-                return next(new BadRequestException("Invalid refreshToken provided"));
-            }
-
-            const user = await UserModel.findOne({ _id: userId });
+            // create new token for the user
+            const userId = (refreshObject.userId as ObjectId).toHexString();
+            const user = await UserModel.findById(userId);
 
             if (!user) {
                 return next(new InternalServerException());
             }
 
-            // create new token for the user
-            const token = this.generateToken(user, true);
-
             return API.response(res, {
-                token,
+                token: this.generateToken(user, true),
             });
         } catch (err) {
             return next(new InternalServerException(err, "Unable to renew token"));
         }
     }
 
-    public logUserAccess = async (req: Request, user: User) => {
+    public logUserAccess = async (req: Request, user: IUser) => {
         return new Promise((resolve, reject) => {
             const logEntry = new AccessLogModel({
                 userId: user._id,
@@ -194,7 +174,7 @@ export class AuthController {
         });
     }
 
-    private generateToken(user: User, isRenew: boolean = false): ITokenData {
+    private generateToken(user: IUser, isRenew: boolean = false): ITokenData {
         const tokenType = "Bearer";
         const refreshToken = isRenew ? undefined : RefreshTokenModel.generate(user).token;
         const expiresIn = JWT_EXPIRATION_MINUTES * 60;

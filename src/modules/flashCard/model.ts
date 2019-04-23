@@ -1,12 +1,7 @@
-import { prop, Ref, Typegoose } from "typegoose";
+import { Typegoose, prop, Ref, InstanceType } from "typegoose";
 import { Deck } from "../deck";
 
 export class FlashCard extends Typegoose {
-    // tslint:disable-next-line: variable-name
-    public _id: string;
-    public createdAt: Date;
-    public updatedAt: Date;
-
     @prop({ required: true, ref: Deck })
     public deckId: Ref<Deck>;
 
@@ -17,4 +12,5 @@ export class FlashCard extends Typegoose {
     public back: string;
 }
 
+export type IFlashCard = InstanceType<FlashCard>;
 export const FlashCardModel = new FlashCard().getModelForClass(FlashCard, { schemaOptions: { timestamps: true } });

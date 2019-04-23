@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { AuthRoutes } from "../modules/auth";
-import { HttpException } from "../utils/exception";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 
 const routes = Router();

@@ -1,10 +1,12 @@
+import * as validator from "validator";
 import { check } from "express-validator/check";
 import { UserModel } from "../modules/user";
 
 export const login = [
-    check("username")
-        .isLength({ min: 4, max: 32 })
-        .withMessage("Username must be between 4 and 32 characters"),
+    check("email")
+        .isEmail()
+        .normalizeEmail()
+        .withMessage("Invalid email"),
     check("password")
         .isLength({ min: 6, max: 72 })
         .withMessage("Invalid password"),
@@ -18,6 +20,7 @@ export const register = [
         .withMessage("Username is already in use"),
     check("email")
         .isEmail()
+        .normalizeEmail()
         .withMessage("Invalid email")
         .custom(async (email) => await UserModel.findOne({ email }).then((u) => !u))
         .withMessage("Email is already in use"),
@@ -50,11 +53,27 @@ export const changePassword = [
 export const forgotPassword = [
     check("email")
         .isEmail()
+        .normalizeEmail()
         .withMessage("Invalid email"),
 ];
 
 export const renewToken = [
     check("refreshToken")
         .not().isEmpty()
-        .withMessage("No refreshToken provided"),
+        .withMessage("No refreshToken provided")
+        .custom((refreshToken, { req }) => {
+            const parts = refreshToken.split(".");
+
+            if (parts.length === 2) {
+                const userId = parts[0];
+                const token = parts[1];
+
+                if (validator.isMongoId(userId) && token.length === 80) {
+                    return true;
+                }
+             }
+
+            return false;
+        })
+        .withMessage("Invalid refreshToken"),
 ];

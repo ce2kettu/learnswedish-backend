@@ -1,13 +1,8 @@
-import { prop, Ref, Typegoose } from "typegoose";
+import { Typegoose, prop, Ref, InstanceType } from "typegoose";
 import { FlashCard } from "../flashCard";
 import { User } from "../user";
 
 export class Review extends Typegoose {
-    // tslint:disable-next-line: variable-name
-    public _id: string;
-    public createdAt: Date;
-    public updatedAt: Date;
-
     @prop({ required: true, ref: User })
     public userId: Ref<User>;
 
@@ -24,4 +19,5 @@ export class Review extends Typegoose {
     public dueDate: Date;
 }
 
+export type IReview = InstanceType<Review>;
 export const ReviewModel = new Review().getModelForClass(Review, { schemaOptions: { timestamps: true } });

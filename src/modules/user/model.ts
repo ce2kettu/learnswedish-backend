@@ -1,5 +1,5 @@
 import * as bcrypt from "bcrypt";
-import { instanceMethod, pre, prop, Typegoose } from "typegoose";
+import { Typegoose, pre, prop, instanceMethod, InstanceType } from "typegoose";
 
 const SALT_WORK_FACTOR = 10;
 
@@ -25,11 +25,6 @@ const SALT_WORK_FACTOR = 10;
 })
 
 export class User extends Typegoose {
-    // tslint:disable-next-line: variable-name
-    public _id: string;
-    public createdAt: Date;
-    public updatedAt: Date;
-
     @prop({ required: true, unique: true, minlength: 4, maxlength: 32 })
     public username: string;
 
@@ -45,10 +40,10 @@ export class User extends Typegoose {
     @prop({ required: true })
     public lastName: string;
 
-    @prop({ default: true })
+    @prop({ default: () => true })
     public isActive: boolean;
 
-    @prop({ default: false })
+    @prop({ default: () => true })
     public isAdmin: boolean;
 
     @instanceMethod
@@ -61,4 +56,5 @@ export class User extends Typegoose {
     }
 }
 
+export type IUser = InstanceType<User>;
 export const UserModel = new User().getModelForClass(User, { schemaOptions: { timestamps: true } });
