@@ -16,7 +16,7 @@ import { ObjectId } from "bson";
 import { transformModel } from "../../utils/pretty";
 
 const JWT_EXPIRATION_MINUTES = 60;
-const PASSWORD_RESET_VALID_HOURS = 12;
+const PASSWORD_RESET_VALID_HOURS = 3;
 
 export class AuthController {
     public login = async (req: Request, res: Response, next: NextFunction) => {
@@ -82,10 +82,10 @@ export class AuthController {
     public changePassword = async (req: IAuthenticatedRequest, res: Response, next: NextFunction) => {
         try {
             const postData: IChangePassword = req.body;
-
             const user = req.user;
             const isValid = await user.comparePassword(postData.oldPassword);
 
+            // wrong password
             if (!isValid) {
                 return next(new UnauthorizedException("Wrong password"));
             }
@@ -107,8 +107,9 @@ export class AuthController {
             const postData: IForgotPassword = req.body;
             const user = await UserModel.findOne({ email: postData.email });
 
+            // no user found
             if (!user) {
-                return next(new BadRequestException());
+                return next(new BadRequestException("No user found"));
             }
 
             // save entry in database
@@ -131,6 +132,26 @@ export class AuthController {
         }
     }
 
+    // TODO: allow user to change password
+    public resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const verification: string = req.query.t;
+            const passwordReset = await PasswordResetModel.findOne({ verification, isUsed: false });
+
+            // reset is invalid or has expired
+            if (!passwordReset || isBefore(passwordReset.expiresAt, Date.now())) {
+                return next(new BadRequestException("Invalid password reset id"));
+            }
+
+            passwordReset.isUsed = true;
+            passwordReset.ipChanged = requestIp.getClientIp(req);
+            passwordReset.browserChanged = req.headers["user-agent"];
+            await passwordReset.save();
+        } catch (err) {
+            return next(new InternalServerException(err));
+        }
+    }
+
     public renewToken = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const postData: IRenewToken = req.body;
@@ -148,6 +169,7 @@ export class AuthController {
             const userId = (refreshObject.userId as ObjectId).toHexString();
             const user = await UserModel.findById(userId);
 
+            // user was mostly likely deleted
             if (!user) {
                 return next(new InternalServerException());
             }

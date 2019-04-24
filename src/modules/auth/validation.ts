@@ -1,67 +1,78 @@
 import * as validator from "validator";
-import { check } from "express-validator/check";
-import { UserModel } from "../modules/user";
+import { body } from "express-validator/check";
+import { UserModel } from "../user";
 
 export const login = [
-    check("email")
+    body("email")
         .isEmail()
         .normalizeEmail()
         .withMessage("Invalid email"),
-    check("password")
+    body("password")
         .isLength({ min: 6, max: 72 })
         .withMessage("Invalid password"),
 ];
 
 export const register = [
-    check("username")
+    body("username")
         .isLength({ min: 4, max: 32 })
+        .trim()
         .withMessage("Username must be between 4 and 32 characters")
         .custom(async (username) => await UserModel.findOne({ username }).then((u) => !u))
         .withMessage("Username is already in use"),
-    check("email")
+    body("email")
         .isEmail()
         .normalizeEmail()
         .withMessage("Invalid email")
         .custom(async (email) => await UserModel.findOne({ email }).then((u) => !u))
         .withMessage("Email is already in use"),
-    check("password")
+    body("password")
         .isLength({ min: 6, max: 72 })
         .withMessage("Invalid password"),
-    check("confirmPassword")
+    body("confirmPassword")
         .custom((confirmPassword, { req }) => req.body.password === confirmPassword)
         .withMessage("Passwords do not match"),
-    check("firstName")
+    body("firstName")
         .not().isEmpty()
+        .trim()
         .withMessage("First Name is empty"),
-    check("lastName")
+    body("lastName")
         .not().isEmpty()
+        .trim()
         .withMessage("Last Name is empty"),
 ];
 
 export const changePassword = [
-    check("oldPassword")
+    body("oldPassword")
         .isLength({ min: 6, max: 72 })
         .withMessage("Invalid password"),
-    check("newPassword")
+    body("newPassword")
         .isLength({ min: 6, max: 72 })
         .withMessage("Invalid password"),
-    check("confirmPassword")
+    body("confirmPassword")
         .custom((confirmPassword, { req }) => req.body.newPassword === confirmPassword)
         .withMessage("Passwords do not match"),
 ];
 
 export const forgotPassword = [
-    check("email")
+    body("email")
         .isEmail()
         .normalizeEmail()
         .withMessage("Invalid email"),
 ];
 
-export const renewToken = [
-    check("refreshToken")
+export const resetPassword = [
+    body("t")
         .not().isEmpty()
-        .withMessage("No refreshToken provided")
-        .custom((refreshToken, { req }) => {
+        .withMessage("Invalid password reset id")
+        .custom((verification) => verification.length === 80)
+        .withMessage("Invalid password reset id"),
+];
+
+export const renewToken = [
+    body("refreshToken")
+        .not().isEmpty()
+        .withMessage("Invalid refreshToken")
+        .custom((refreshToken) => {
             const parts = refreshToken.split(".");
 
             if (parts.length === 2) {
@@ -71,7 +82,7 @@ export const renewToken = [
                 if (validator.isMongoId(userId) && token.length === 80) {
                     return true;
                 }
-             }
+            }
 
             return false;
         })

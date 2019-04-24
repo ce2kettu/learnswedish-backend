@@ -1,4 +1,4 @@
-import * as Validator from "../../validation/auth";
+import * as Validator from "./validation";
 import { Router } from "express";
 import { AuthController } from "./controller";
 import { isAuthenticated } from "../../middlewares/isAuthenticated";
@@ -21,6 +21,7 @@ export class AuthRoutes {
         this.router.post("/register", validate(Validator.register), this.controller.register);
         this.router.post("/token", validate(Validator.renewToken), this.controller.renewToken);
         this.router.post("/forgot-password", validate(Validator.forgotPassword), this.controller.forgotPassword);
+        this.router.get("/reset-password", validate(Validator.resetPassword), this.controller.resetPassword);
         this.router.post("/change-password", isAuthenticated,
             validate(Validator.changePassword), this.controller.changePassword);
     }
